@@ -1,0 +1,48 @@
+<canvas id="myChart"></canvas>
+
+<script src="chart.js"></script>
+<script>
+var ctx = document.getElementById('myChart').getContext('2d');
+var chart = new Chart(ctx, {
+    // The type of chart we want to create
+    type: 'line',
+//    type: 'horizontalBar',
+            
+    // The data for our dataset
+    data: {
+        labels: ['January', 'February', 'March', 'April', 'May', 'June', 'July'],
+        datasets: [{
+            label: 'My First dataset',
+//            backgroundColor: 'rgb(255, 99, 132)',
+            backgroundColor: 'rgba(0,0,0,0.0)',
+            borderColor: 'rgb(255, 99, 132)',
+
+            data: [0, 10, 5, 2, 20, 30, 45]
+        }]
+    },
+
+    // Configuration options go here
+    options: {}
+});
+
+function add() {
+ chart.data.labels.push('ok');
+	data = 23;
+// chart.data.datasetslabels.push('ok');
+    chart.data.datasets.forEach((dataset) => {
+        dataset.data.push(data);
+    });
+	chart.update();
+}
+function remove() {
+    chart.data.labels.shift();
+    chart.data.datasets.forEach((dataset) => {
+        dataset.data.shift();
+    });
+	chart.update();
+}
+</script>
+
+
+<a href="#" onclick="add()"> ADD </a>
+<a href="#" onclick="remove()"> DEL </a>

@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="Content-type" content="text/html; charset=utf-8">
+    <title>WebSocketTester</title>
+    <style type="text/css" media="screen">
+    body {
+      margin:0;
+      padding:0;
+      background-color: black;
+    }
+    #inp, #out {
+      font-family: MS Sans;
+      font-size: 12px;
+      line-height: 13px;
+      color: #AAA;
+      padding:4px;
+      }
+    #dbg, #input_div, #input_el {
+      font-family: MS Sans;
+      font-size: 12px;
+      line-height: 15px;
+      color: #AAA;
+    }
+
+    #dbg, #input_div {
+      margin:0;
+      padding:0;
+      padding-left:4px;
+    }
+
+    #input_el {
+      width:98%;
+      background-color: rgba(0,0,0,0);
+      border: 0px;
+    }
+    #input_el:focus {
+      outline: none;
+    }
+    </style>
+    <script type="text/javascript">
+    var xhistory = Array(); 
+    var pp=0;
+    top.xcommand = "";
+    start = 22;
+    
+    
+    var ws = null;
+    function ge(s){ return document.getElementById(s);}
+    function ce(s){ return document.createElement(s);}
+    function stb(){ xdiv = ge("dbg");if (xdiv) xdiv.scrollTop = xdiv.scrollHeight - xdiv.clientHeight+50;}
+
+//    function stb(){ dbg.scrollTo(0, document.body.scrollHeight || document.documentElement.scrollHeight); }
+    function sendBlob(str){
+      var buf = new Uint8Array(str.length);
+      for (var i = 0; i < str.length; ++i) buf[i] = str.charCodeAt(i);
+      ws.send(buf);
+    }
+    function addMessage(m){
+      var msg = ce("div");
+      msg.innerHTML = "<font color=#CCCCCC>&raquo;</font> "+m;
+      ge("dbg").appendChild(msg);
+      stb();
+    }
+
+const byteToHex = [];
+
+for (let n = 0; n <= 0xff; ++n)
+{
+    const hexOctet = n.toString(16).padStart(2, "0").toUpperCase();;
+    byteToHex.push(hexOctet);
+}
+
+function hex(arrayBuffer)
+{
+    const buff = new Uint8Array(arrayBuffer);
+    const hexOctets = []; // new Array(buff.length) is even faster (preallocates necessary array size), then use hexOctets[i] instead of .push()
+    for (let i = 0; i < buff.length; ++i)
+        hexOctets.push(byteToHex[buff[i]]);
+    return hexOctets.join(" ");
+}
+inputc = Array();
+inputs = Array();
+outputs = Array();
+active = 0;
+
+function redraw(a) {
+active = a;
+ge("out").innerHTML="INPUT<br>"+hex(inputs[a])+"<br><br><br>OUTPUT<br>"+hex(outputs[a+128]);
+}
+
+val_tmp = 0;
+function addel(cmd,name,flg) {
+          if (flg) {
+              if (val_tmp && ge("ccc"+val_tmp)) ge("ccc"+val_tmp).style="padding:2px;color:white;margin:3px;border:solid 1px;float:left;cursor:pointer;background:#777777";
+              inputc[cmd]=1;
+                var msg = ce("div");
+                msg.style="padding:2px;color:red;margin:3px;border:solid 1px;float:left;cursor:pointer;background:#777777";
+                msg.id="ccc"+cmd;
+                msg.innerText = name;
+                msg.onclick = function() {redraw(cmd);}
+                ge("inp").appendChild(msg);
+              } else {
+              inputc[cmd]++;
+              if (ge("ccc"+cmd)) {ge("ccc"+cmd).innerHTML = " "+name+" "+inputc[cmd];
+              ge("ccc"+cmd).style="padding:2px;color:red;margin:3px;border:solid 1px;float:left;cursor:pointer;background:#777777";
+              }
+              if (val_tmp && val_tmp!=cmd && ge("ccc"+val_tmp)) ge("ccc"+val_tmp).style="padding:2px;color:white;margin:3px;border:solid 1px;float:left;cursor:pointer;background:#777777";
+            }
+           val_tmp=cmd;
+}
+
+function getport(buff) {
+pksize = 256*buff[2]+buff[3];
+cmds = buff[4];
+flg=false;
+if (cmd<128) { // INPUT COMMAND
+if (inputs[cmds]) {inputc[cmds]++;flg=false;} else {inputc[cmds] = 1;flg=true;}
+inputs[cmds] = buff;
+} else { 	  // OUTPUT RESULT
+outputs[cmds] = buff;
+}
+addel(cmds,cmds,flg);
+if (active) redraw(active);
+}
+
+    function startSocket(){
+      ws = new WebSocket('ws://'+document.location.host+'/ws',['arduino']);
+      ws.binaryType = "arraybuffer";
+      ws.onopen = function(e){
+        addMessage("Connected");
+      };
+      console.log("Connected");
+      ws.onclose = function(e){addMessage("Disconnected");};
+      ws.onerror = function(e){console.log("ws error", e);addMessage("Error");};
+      ws.onmessage = function(e){
+        var msg = "";
+        if(e.data instanceof ArrayBuffer){
+        var bytes = new Uint8Array(e.data);
+        getport(bytes);
+//			  console.log("ok");
+	        return;
+/*
+          msg = "BIN:";
+          var bytes = new Uint8Array(e.data);
+          for (var i = 0; i < bytes.length; i++) {
+            msg += String.fromCharCode(bytes[i]);
+          }
+*/
+
+        } else {
+          msg = e.data;
+        }
+        addMessage(msg);
+      };
+      val_tmp = 0;
+      ge("input_el").onkeydown = function(e){
+        if(e.keyCode == 13 && ge("input_el").value != ""){
+          val = ge("input_el").value.toLowerCase();
+    
+          top.xcommand = val;
+          xhistory[pp]=val;pp++;
+
+          if (val.substring(0,3)=='add') {
+            val = val.substring(4).trim();
+            vv = parseInt(val);
+            outputs[vv+128] = [44,20,32,77,88,99,113,200,33,22,44];
+            if (!inputc[vv]) {
+              if (val_tmp) ge("ccc"+val_tmp).style="padding:2px;color:white;margin:3px;border:solid 1px;float:left;cursor:pointer;background:#777777";
+              inputc[vv]=1;
+              addel(vv,val,1);
+              } else {
+              inputc[vv]++;
+              ge("ccc"+vv).innerHTML = " "+val+" "+inputc[vv];
+              ge("ccc"+vv).style="padding:2px;color:red;margin:3px;border:solid 1px;float:left;cursor:pointer;background:#777777";
+              if (val_tmp && val_tmp!=vv) ge("ccc"+val_tmp).style="padding:2px;color:white;margin:3px;border:solid 1px;float:left;cursor:pointer;background:#777777";
+            }
+           val_tmp=vv;
+            return;
+          }
+          var client1 = new XMLHttpRequest();client1.open('GET', '/_cmd?cmd='+val);
+          client1.onreadystatechange = function() {
+            if (this.readyState==4) parent.addMessage(client1.responseText);
+          };                                                                                                                                                   
+          client1.send();   
+          ge("input_el").value = "";
+          
+        } else if (e.keyCode==38) { 
+          
+              e.returnValue=false;pp--; if (xhistory[pp]) {ge("input_el").value = xhistory[pp]+'';
+              ge("input_el").selectionStart = ge("input_el").value.length;} else pp++;
+              
+        } else if (e.keyCode==40) {
+              e.returnValue=false;pp++; if (xhistory[pp]) ge("input_el").value = xhistory[pp]+''; else pp--;
+          
+        } else {
+          
+        }
+        
+      stb();
+      }
+    }
+    function startEvents(){
+      var es = new EventSource('/events');
+      es.onopen = function(e) {
+        addMessage("Events Opened");
+      };
+      es.onerror = function(e) {
+        if (e.target.readyState != EventSource.OPEN) {
+          addMessage("Events Closed");
+        }
+      };
+      es.onmessage = function(e) {
+        addMessage("Event: " + e.data);
+      };
+      es.addEventListener('ota', function(e) {
+        addMessage("Event[ota]: " + e.data);
+      }, false);
+      es.addEventListener('data', function(e) {
+        var  xobj = JSON.parse(e.data);
+        console.log(xobj);
+//        addMessage("DATA: " + obj);
+      }, false);
+    }
+    
+    function onBodyLoad(){
+      startSocket();
+      startEvents();
+      ge("input_el").focus();
+    }
+    top.xfunc = "";
+    </script>
+  </head>
+  <body id="body" onload="onBodyLoad()">
+<pre id="dbg" style='display:block;width:100%;height:190px;background:#000;color:#F0F0F0;border:ridge 2px;overflow-y:scroll;'></pre>
+<div id="fdbg" style='display:block;position:absolute;padding:10px 35px 35px 10px;margin:10px 0px 10px 0px;border:ridge #FFF 2px;bottom:10px;background:#333333;left:5px;right:5px;border-radius:10px;height:240px;color:#333333;font-family:Tahoma,Verdana,MS Sans Serif;padding-left:15px;margin-bottom:-5px'>
+<div style='width:100%;position:relative;left:-8px;top:-10px;height:5px;background:#cccccc;cursor:n-resize' ondrag="dbgsize(event)"></div>
+<input type=text name=xfor id="input_el" onblur="this.focus()" style='position:relative;padding:0;margin:0;top:-50px;height:24px;width:99%;border:solid 1px' value='' onchange='top.xfunc=this.value;'><br>
+<div id="inp" style='width:49%;color:white;position:relative;top:-30px;float:left;height:100%;display:block;border:solid 1px'></div>
+<div id="out" style='width:49%;color:white;position:relative;top:-30px;float:right;height:100%;display:block;border:solid 1px'></div>
+</div>
+<div id="null" style='display:none'></div>
+</body>
+</html>
