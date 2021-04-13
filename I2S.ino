@@ -25,8 +25,10 @@ void i2sInit(){
     .channel_format = I2S_CHANNEL_FMT_ONLY_LEFT,
     .communication_format = i2s_comm_format_t(I2S_COMM_FORMAT_I2S | I2S_COMM_FORMAT_I2S_MSB),
     .intr_alloc_flags = 0,
-    .dma_buf_count = 64,
-    .dma_buf_len = 1024,
+//    .dma_buf_count = 64,
+//    .dma_buf_len = 1024,
+    .dma_buf_count = 32,
+    .dma_buf_len = 64,
     .use_apll = 1
   };
 
@@ -90,58 +92,38 @@ time_t oldxxx = 0;
 
 
 void readmic() {
+
+  ///                    Сделать событие на обрыв сети вырубить трансляцию
     if (!i2sinited) {
     i2sInit();
     vTaskDelay(100);  
     }
     
-    int flash_wr_size = 0;
+//    int flash_wr_size = 0;
     size_t bytes_read;
   
   char* i2s_read_buff = (char*) calloc(i2s_read_len, sizeof(char));
+//  char* out_read_buff = (char*) calloc(i2s_read_len, sizeof(char));
   
 if (!mstarted) { mstarted = true;
     i2s_read(I2S_PORT, (void*) i2s_read_buff, i2s_read_len, &bytes_read, portMAX_DELAY);
     i2s_read(I2S_PORT, (void*) i2s_read_buff, i2s_read_len, &bytes_read, portMAX_DELAY);
     i2s_read(I2S_PORT, (void*) i2s_read_buff, i2s_read_len, &bytes_read, portMAX_DELAY);
-    i2s_read(I2S_PORT, (void*) i2s_read_buff, i2s_read_len, &bytes_read, portMAX_DELAY);
 }
-//    time_t xxx,xx,x;
-//    xxx = millis();
     i2s_read(I2S_PORT, (uint8_t*)i2s_read_buff, i2s_read_len, &bytes_read, portMAX_DELAY);
-//    xx = millis()-xxx;
-//    i2s_adc_data_scale(flash_write_buff, i2s_read_buff, i2s_read_len);
 
-//    for (uint16_t i=0;i<i2s_read_len;i++) {
-//      flash_write_buff[i] = i2s_read_buff[i];
+//    for (int i=0;i<i2s_read_len;i++) {
+//      *out_read_buff[i]=*i2s_read_buff[i];
+//      memcpy(out_read_buff,i2s_read_buff,i2s_read_len);
 //    }
 
-//    if (clid) {
-//      xxclient->write(i2s_read_buff, i2s_read_len);
-//      ws.binary(clid, (uint8_t*)flash_write_buff, i2s_read_len);
-
-      
-      if (clid) {ws.binary(clid, (uint8_t*)i2s_read_buff, (i2s_read_len-300));
-
- 
+    if (clid) {ws.binary(clid, (uint8_t*)i2s_read_buff, (i2s_read_len-300));
     } else example_disp_buf((uint8_t*) i2s_read_buff, 48);
 
-        
- 
-//      vTaskDelay(125);
-//    x = millis() - xxx - xx;
-
-//      if ((mls-omls)<100) vTaskDelay(46);
-//      ets_printf(">> %lu \n",mls-omls);
-//      oldxxx = xxx;
-//      vTaskDelay(20);
-//      xxclient->binary((uint8_t*)i2s_read_buff, i2s_read_len);
-//      vTaskDelay(2);
-//    } else example_disp_buf((uint8_t*) i2s_read_buff, 32);
-//      xxclient->binary((uint8_t*)i2s_read_buff, i2s_read_len);
-//    vTaskDelay(12);
     free(i2s_read_buff);
     i2s_read_buff = NULL;
+//    free(out_read_buff);
+//    out_read_buff = NULL;
    if (micstart) tasks.push_back("rm");
 }
 
