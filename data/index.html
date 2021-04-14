@@ -4,6 +4,7 @@
     <meta http-equiv="Content-type" content="text/html; charset=utf-8">
     <title>WebSocketTester</title>
     <script src="/js/jquery-2.1.1.min.js"></script>
+    <script src="/js/p5.sound.js"></script>
     <style type="text/css" media="screen">
     
     body {
@@ -44,13 +45,10 @@
     var xhistory = Array(); 
     var pp=0;
     top.xcommand = "";
-    start = 22;
-    
+
     
     var ws = null;
 
-
-   var audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
     function ge(s){ return document.getElementById(s);}
     function ce(s){ return document.createElement(s);}
@@ -59,7 +57,35 @@
 
 document.onkeydown = function(e) {
     e = e || window.event;
-        ge("input_el").focus();
+
+if (e.srcElement.id == "input_el") {
+
+//        console.log(e);
+        if(e.keyCode == 13 && ge("input_el").value != ""){
+          val = ge("input_el").value.toLowerCase();
+          
+          top.xcommand = val;
+          xhistory[pp]=val;pp++;
+          if (val=="s") {startSocket(); ge("input_el").value=''; return}
+//          console.log('enter');
+          var client1 = new XMLHttpRequest();client1.open('GET', '/_cmd?cmd='+val);
+          client1.onreadystatechange = function() {
+//            console.log(this.readyState);
+            if (this.readyState==4) parent.addMessage(client1.responseText);
+                
+          };                                                                                                                                                   
+          client1.send();   
+          ge("input_el").value = "";
+        } else if (e.keyCode==38) { 
+              e.returnValue=false;pp--; if (xhistory[pp]) {ge("input_el").value = xhistory[pp]+'';
+              ge("input_el").selectionStart = ge("input_el").value.length;} else pp++;
+        } else if (e.keyCode==40) {
+              e.returnValue=false;pp++; if (xhistory[pp]) ge("input_el").value = xhistory[pp]+''; else pp--;
+        } 
+      stbx();
+
+  
+} else ge("input_el").focus();
 	  return true;
 }
 
@@ -93,55 +119,57 @@ function hex(arrayBuffer)
         hexOctets.push(byteToHex[buff[i]]);
     return hexOctets.join(" ");
 }
-inputc = Array();
-inputs = Array();
-outputs = Array();
-active = 0;
 
-function redraw(a) {
-active = a;
-ge("out").innerHTML="INPUT<br>"+hex(inputs[a])+"<br><br><br>OUTPUT<br>"+hex(outputs[a+128]);
-}
 
-val_tmp = 0;
-function addel(cmd,name,flg) {
-          if (flg) {
-              if (val_tmp && ge("ccc"+val_tmp)) ge("ccc"+val_tmp).style="padding:2px;color:white;margin:3px;border:solid 1px;float:left;cursor:pointer;background:#777777";
-              inputc[cmd]=1;
-                var msg = ce("div");
-                msg.style="padding:2px;color:red;margin:3px;border:solid 1px;float:left;cursor:pointer;background:#777777";
-                msg.id="ccc"+cmd;
-                msg.innerText = name;
-                msg.onclick = function() {redraw(cmd);}
-                ge("inp").appendChild(msg);
-              } else {
-              inputc[cmd]++;
-              if (ge("ccc"+cmd)) {ge("ccc"+cmd).innerHTML = " "+name+" "+inputc[cmd];
-              ge("ccc"+cmd).style="padding:2px;color:red;margin:3px;border:solid 1px;float:left;cursor:pointer;background:#777777";
-              }
-              if (val_tmp && val_tmp!=cmd && ge("ccc"+val_tmp)) ge("ccc"+val_tmp).style="padding:2px;color:white;margin:3px;border:solid 1px;float:left;cursor:pointer;background:#777777";
+      xstarted = false;
+        var channels = 1;
+        let subcounter = 0;
+        let audiobuffer = [];
+        var audioCtx = 0;
+        var frameCount = 0;
+
+        function play(soundName) {
+
+//          if (audiobuffer[subcounter]) 
+
+//        if (typeof audiobuffer[subcounter] !== 'undefined') {
+          if (typeof audiobuffer[subcounter] == 'undefined') {
+            
+              setTimeout(()=>{play('test')},1);
+            return;
+          }
+          frameCount = audiobuffer[subcounter].length;
+//        else setTimeout(()=>{play('test');},125);
+                          
+//            var myAudioBuffer = audioCtx.createBuffer(channels, frameCount, 16000);
+            var myAudioBuffer = audioCtx.createBuffer(channels, frameCount, 22050);
+
+
+            for (var channel = 0; channel < channels; channel++) {
+                var nowBuffering = myAudioBuffer.getChannelData(channel);
+                for (var i = 0; i < frameCount; i++) {
+                    // audio needs to be in [-1.0; 1.0]
+                    var word = audiobuffer[subcounter][i];
+                    nowBuffering[i] = ((word + 32768) % 65536 - 32768) / 32768.0;
+                }
             }
-           val_tmp=cmd;
-}
 
-function getport(buff) {
-  console.log(buff);
-/*
-pksize = 256*buff[2]+buff[3];
-cmds = buff[4];
-flg=false;
-if (cmd<128) { // INPUT COMMAND
-if (inputs[cmds]) {inputc[cmds]++;flg=false;} else {inputc[cmds] = 1;flg=true;}
-inputs[cmds] = buff;
-} else { 	  // OUTPUT RESULT
-outputs[cmds] = buff;
-}
-addel(cmds,cmds,flg);
-if (active) redraw(active);
-*/
-}
+            subcounter += 1;
+            var source = audioCtx.createBufferSource();
+            source.buffer = myAudioBuffer;
+            source.connect(audioCtx.destination);
+            source.onended = play;
+            source.start();
+//        }
+        }
+
+
+skipper = 0;
 
     function startSocket(){
+      
+
+//      ws = new WebSocket('ws://'+document.location.host+'/ws',['arduino']);
       ws = new WebSocket('ws://'+document.location.host+'/ws',['arduino']);
       ws.binaryType = "arraybuffer";
       ws.onopen = function(e){
@@ -150,11 +178,45 @@ if (active) redraw(active);
       console.log("Connected");
       ws.onclose = function(e){addMessage("Disconnected");};
       ws.onerror = function(e){console.log("ws error", e);addMessage("Error");};
+
       ws.onmessage = function(e){
         var msg = "";
         if(e.data instanceof ArrayBuffer){
-        var bytes = new Uint8Array(e.data);
-        getport(bytes);
+          
+//          if (skipper>30) {
+//            skipper = 0;
+//            return;
+            
+            
+//          }
+//          skipper++;
+//          console.log(e.data);
+//          return;
+        if (!xstarted) {
+         audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }  
+
+        buff = new Uint16Array(e.data)
+        
+//        console.log(buff);
+
+//        audiobuffer.push(new Uint16Array(e.data));
+        audiobuffer.push(buff);
+ //       play('test');
+
+//        play('test');
+        console.log(">>",buff.length);
+//        console.log('push',buff.length);
+//        audiobuffer.push(new Uint8Array(e.data));
+//        if (audiobuffer.length>100) {audiobuffer.shift();console.log("-----",audiobuffer.length);}
+//        console.log(audiobuffer);
+        if (!xstarted) {
+                    xstarted = true;
+                    setTimeout(()=>{play('test')},100);
+                    
+        }          
+//        var bytes = new Uint8Array(e.data);
+//        getport(bytes);
 //			  console.log("ok");
 	        return;
 /*
@@ -170,53 +232,15 @@ if (active) redraw(active);
         }
         addMessage(msg);
       };
+      
+      
       val_tmp = 0;
-      ge("input_el").onkeydown = function(e){
-        if(e.keyCode == 13 && ge("input_el").value != ""){
-          val = ge("input_el").value.toLowerCase();
-    
-          top.xcommand = val;
-          xhistory[pp]=val;pp++;
-
-          if (val.substring(0,3)=='add') {
-            val = val.substring(4).trim();
-            vv = parseInt(val);
-            outputs[vv+128] = [44,20,32,77,88,99,113,200,33,22,44];
-            if (!inputc[vv]) {
-              if (val_tmp) ge("ccc"+val_tmp).style="padding:2px;color:white;margin:3px;border:solid 1px;float:left;cursor:pointer;background:#777777";
-              inputc[vv]=1;
-              addel(vv,val,1);
-              } else {
-              inputc[vv]++;
-              ge("ccc"+vv).innerHTML = " "+val+" "+inputc[vv];
-              ge("ccc"+vv).style="padding:2px;color:red;margin:3px;border:solid 1px;float:left;cursor:pointer;background:#777777";
-              if (val_tmp && val_tmp!=vv) ge("ccc"+val_tmp).style="padding:2px;color:white;margin:3px;border:solid 1px;float:left;cursor:pointer;background:#777777";
-            }
-           val_tmp=vv;
-            return;
-          }
-          var client1 = new XMLHttpRequest();client1.open('GET', '/_cmd?cmd='+val);
-          client1.onreadystatechange = function() {
-            if (this.readyState==4) parent.addMessage(client1.responseText);
-          };                                                                                                                                                   
-          client1.send();   
-          ge("input_el").value = "";
-          
-        } else if (e.keyCode==38) { 
-          
-              e.returnValue=false;pp--; if (xhistory[pp]) {ge("input_el").value = xhistory[pp]+'';
-              ge("input_el").selectionStart = ge("input_el").value.length;} else pp++;
-              
-        } else if (e.keyCode==40) {
-              e.returnValue=false;pp++; if (xhistory[pp]) ge("input_el").value = xhistory[pp]+''; else pp--;
-          
-        } else {
-          
-        }
-        
-      stbx();
-      }
     }
+
+
+//      ge("input_el").onkeydown = function(e){
+//      }
+
     function startEvents(){
       var es = new EventSource('/events');
       es.onopen = function(e) {
@@ -229,6 +253,7 @@ if (active) redraw(active);
       };
       es.onmessage = function(e) {
         addMessage("Event: " + e.data);
+        console.log(e.data);
       };
       es.addEventListener('ota', function(e) {
         addMessage("Event[ota]: " + e.data);

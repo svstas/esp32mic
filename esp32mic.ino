@@ -5,6 +5,7 @@
 #include <TimeLib.h>
 #include <AsyncTCP.h>
 #include <ESPAsyncWebServer.h>
+#include <ESPAsyncWiFiManager.h>        
 #include <SPIFFSEditor.h>
 #include <Esp.h>
 #include <esp_system.h>
@@ -65,7 +66,7 @@ struct conf {
     const char* password = "freestyle";
     const char* http_username = "admin";
     const char* http_password = "admin";
-    bool wifi = true;
+    int wifi = 2;
     bool ota  = true;
     bool tcp  = true;
     bool display = false;

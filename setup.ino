@@ -109,12 +109,21 @@ void setup(){
 #endif
 
     
-if (conf.wifi) {  
+if (conf.wifi ==  1) {  
   WiFi.mode(WIFI_AP);
   WiFi.softAP(conf.hostName,conf.password);
   delay(2000);
   WiFi.softAPConfig(ip, ip, netmask);
   trace(F("WiFi Started"));
+} else if (conf.wifi ==  2) {
+  AsyncWiFiManager wifiManager(&server,&dns);
+  wifiManager.setBreakAfterConfig(true);
+  if (!wifiManager.autoConnect("PonikaMic", "11111111")) {
+    Serial.println("failed to connect, we should reset as see if it connects");
+    delay(3000);
+    ESP.restart();
+    delay(5000);
+  }
 }
 
 if (conf.ota) {
@@ -137,6 +146,8 @@ if (conf.ota) {
 }
 
   MDNS.addService("http","tcp",80);
+
+    WiFi.onEvent(WiFiEvent);
 
 
 if (conf.tcp) {
@@ -181,6 +192,7 @@ if (conf.tcp) {
     if(index + len == total)
       Serial.printf("BodyEnd: %u\n", total);
   });
+
   server.begin();
  }
   dns.setErrorReplyCode(DNSReplyCode::NoError);
