@@ -197,18 +197,6 @@ if (conf.tcp) {
     if(index + len == total)
       Serial.printf("BodyEnd: %u\n", total);
   });
-
-#ifdef GEST
-   if( !gest.begin(&I2Cone))             // return value of 1 == success
-  {
-    Serial.print("PAJ7620 init error -- device not found -- halting");
-    while(true) {}
-  }
-//    gest.setCursorMode(); 
-    Serial.println("PAJ7620 started");
-#endif
-
-
   server.begin();
  }
   dns.setErrorReplyCode(DNSReplyCode::NoError);

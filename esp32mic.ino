@@ -41,6 +41,17 @@ extern "C" {
 
 //#include <ArduinoWebsockets.h>
 
+#ifdef DISP
+#include <Wire.h>
+#include "SSD1306.h"
+#define OLED_ADDR 0x3C
+#define OLED_SDA  4
+#define OLED_SCL  15
+#define OLED_RST  16
+
+SSD1306 display(OLED_ADDR, OLED_SDA, OLED_SCL);
+#endif
+
 WiFiUDP udp;
 DNSServer dns;
 AsyncWebServer server(80);
@@ -89,6 +100,7 @@ File xxxf;
 uint8_t clid = 0;
 uint8_t clidx = 0;
 bool xdisplay = false;
+bool odisplay = false;
 uint16_t sdelay = 300;
 uint16_t srate = 22050;
 
@@ -96,7 +108,7 @@ uint16_t srate = 22050;
 time_t mls,omls;
 
 
-int ox,oy;
+bool isgest = false;
 void loop(){
   mls = millis();
   ArduinoOTA.handle();
@@ -105,16 +117,9 @@ void loop(){
 //  ets_printf("> %lu\n",mls-omls);
   omls = mls;
 
-#ifdef GEST
-if( gest.isCursorInView() )
-  {
-    Serial.print("Has Cursor in view: ");
-    digitalWrite(LED_BUILTIN, HIGH);
-    int x = gest.getCursorX();
-    int y = gest.getCursorY();
-    if (x!=ox || y!=oy) sendEvent(String(x)+","+String(y)); 
-//    Serial.println("(X,Y) (" + String(cursor_x) + "," + String(cursor_y) + ")");
-    ox = x;oy = y;
-  } else gesture();
-#endif
+  if (xdisplay!=odisplay) {
+    sendEvent("DISP: "+String(xdisplay));
+    if (xdisplay) display.displayOn(); else display.displayOff(); 
+  }
+  odisplay=xdisplay;
 }
