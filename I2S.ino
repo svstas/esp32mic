@@ -3,6 +3,7 @@ const i2s_port_t I2S_PORT = I2S_NUM_0;
 const int BLOCK_SIZE = 128;
 const int headerSize = 44;
 const char * udpAddress = "192.168.88.234";
+bool mstarted = false;
 
 #define I2S_WS 12
 #define I2S_SD 23
@@ -18,8 +19,10 @@ const char * udpAddress = "192.168.88.234";
 int i2s_read_len = I2S_READ_LEN;
 
 bool i2sinited = false;
+
 void i2sInit(){
   if (i2sinited) return; else i2sinited = true;
+  
   i2s_config_t i2s_config = {
     .mode = (i2s_mode_t)(I2S_MODE_MASTER | I2S_MODE_RX),
     .sample_rate = srate,
@@ -47,16 +50,21 @@ void i2sInit(){
   trace(F("I2S MIC started"));
 }
 
+/*
 
-void i2s_adc_data_scale(char* d_buff, char* s_buff, uint32_t len)
+void xscale(uint8_t* s_buff, uint32_t len)
 {
-    for (int i = 0; i < len; i ++) {
+    uint16_t dac_value = 0;
 
-      d_buff[i] = s_buff[i];
+    for (int i = 0; i < len; i += 2) {
+    dac_value = (uint16_t)((s_buff[i]<<8)+s_buff[i+1]);
+      if (dac_value>12) dac_value = dac_value*volume;  
+     s_buff[i+0] =  (dac_value & 0xff00)>>8;
+     s_buff[i+1] = (dac_value & 0xff);
     }
+//    Serial.println()
 }
 
-bool mstarted = false;
 
 static void i2s_adc_task(void *arg)
 {
@@ -88,6 +96,7 @@ static void i2s_adc_task(void *arg)
 
 }
 
+*/
 
 time_t oldxxx = 0;
 
@@ -109,17 +118,10 @@ void readmic() {
 //  char* out_read_buff = (char*) calloc(i2s_read_len, sizeof(char));
   
 if (!mstarted) { mstarted = true;
-    i2s_read(I2S_PORT, (void*) i2s_read_buff, i2s_read_len, &bytes_read, portMAX_DELAY);
-    i2s_read(I2S_PORT, (void*) i2s_read_buff, i2s_read_len, &bytes_read, portMAX_DELAY);
-    i2s_read(I2S_PORT, (void*) i2s_read_buff, i2s_read_len, &bytes_read, portMAX_DELAY);
+	for (uint8_t i=0;i<4;i++) i2s_read(I2S_PORT, (void*) i2s_read_buff, i2s_read_len, &bytes_read, portMAX_DELAY);
 }
     i2s_read(I2S_PORT, (uint8_t*)i2s_read_buff, i2s_read_len, &bytes_read, portMAX_DELAY);
-
-//    for (int i=0;i<i2s_read_len;i++) {
-//      *out_read_buff[i]=*i2s_read_buff[i];
-//      memcpy(out_read_buff,i2s_read_buff,i2s_read_len);
-//    }
-
+//    xscale((uint8_t*)i2s_read_buff,i2s_read_len);
     if (clid) {ws.binary(clid, (uint8_t*)i2s_read_buff, (i2s_read_len-sdelay));
     } else {
 //      udp.beginPacket(udpAddress, 9000);
@@ -134,19 +136,17 @@ if (!mstarted) { mstarted = true;
 
     free(i2s_read_buff);
     i2s_read_buff = NULL;
-//    free(out_read_buff);
-//    out_read_buff = NULL;
+
    if (micstart) tasks.push_back("rm");
 }
 
-void example_disp_buf(uint8_t* buf, int length)
-{
+void example_disp_buf(uint8_t* buf, int length) {
   String out = "";
     for (int i = 0; i < length; i++) out+=String(buf[i],HEX)+" ";
     sendEvent(out);
 }
 
-void wavHeader(byte* header, int wavSize){
+void wavHeader(byte* header, int wavSize) {
   
     
   header[0] = 'R';

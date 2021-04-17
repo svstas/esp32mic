@@ -1,4 +1,5 @@
 #define countof(a) (sizeof(a) / sizeof(a[0]))
+
 const char mjan[] PROGMEM = "Jan";const char mfeb[] PROGMEM = "Feb";const char mmar[] PROGMEM = "Mar";const char mapr[] PROGMEM = "Apr";const char mmay[] PROGMEM = "May";const char mjun[] PROGMEM = "Jun";const char mjul[] PROGMEM = "Jul";const char maug[] PROGMEM = "Aug";const char msep[] PROGMEM = "Sep";const char moct[] PROGMEM = "Oct";const char mnov[] PROGMEM = "Nov";const char mdec[] PROGMEM = "Dec";
 const char * const  xmonth[] PROGMEM = {mjan,mfeb,mmar,mapr,mmay,mjun,mjul,maug,msep,moct,mnov,mdec};
 
@@ -40,6 +41,7 @@ String printDateTime() {
 
 uint8_t gmonth(char * fmonth) {
   for (uint8_t i=0;i<12;i++) if (strcmp_P(fmonth,xmonth[i])==0) return i+1;
+  return 0;
 }
 
 boolean isIp(String str) {

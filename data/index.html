@@ -2,46 +2,37 @@
 <html>
   <head>
     <meta http-equiv="Content-type" content="text/html; charset=utf-8">
-    <title>WebSocketTester</title>
-    <script src="/js/jquery-2.1.1.min.js"></script>
-    <script src="/js/p5.sound.js"></script>
-    <style type="text/css" media="screen">
-    
-    body {
-      margin:0;
-      padding:0;
-      background-color: black;
-    }
-    #inp, #out {
-      font-family: MS Sans;
-      font-size: 12px;
-      line-height: 13px;
-      color: #AAA;
-      padding:4px;
-      }
-    #dbg, #input_div, #input_el {
-      font-family: MS Sans;
-      font-size: 12px;
-      line-height: 15px;
-      color: #AAA;
-    }
-
-    #dbg, #input_div {
-      margin:0;
-      padding:0;
-      padding-left:4px;
-    }
-
-    #input_el {
-      width:98%;
-      background-color: rgba(0,0,0,0);
-      border: 0px;
-    }
-    #input_el:focus {
-      outline: none;
-    }
-    </style>
+    <title>Ponika Mic & others</title>
+    <link rel="stylesheet" type="text/css" href="/xcss/styles.css">
+    <script src="/xjs/jquery-2.1.1.min.js"></script>
+<!--
+    <script src="/xjs/slider.js"></script>
+    <script src="/js/p5.sound.js"></script> //-->
+    <style type="text/css" media="screen"></style>
     <script type="text/javascript">
+    
+ //Slider mousedown (with mousemove and mouseup) handler.
+
+//Moves slider bar.
+function moveSliderBar($bar, $fill, percent, barWidth) {
+	$bar.css('left', 'calc('+percent+'% - '+(barWidth / 2)+'px)');
+	$fill.css('width', 'calc('+percent+'% - '+(barWidth / 2)+'px)');
+}
+
+   
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
     var xhistory = Array(); 
     var pp=0;
     top.xcommand = "";
@@ -127,7 +118,7 @@ function hex(arrayBuffer)
         let audiobuffer = [];
         var audioCtx = 0;
         var frameCount = 0;
-
+        var xgain = 1;
         function play(soundName) {
 
 //          if (audiobuffer[subcounter]) 
@@ -143,6 +134,7 @@ function hex(arrayBuffer)
                           
 //            var myAudioBuffer = audioCtx.createBuffer(channels, frameCount, 16000);
             var myAudioBuffer = audioCtx.createBuffer(channels, frameCount, 22050);
+//            var myAudioBuffer = audioCtx.createBuffer(channels, frameCount, 44100);
 
 
             for (var channel = 0; channel < channels; channel++) {
@@ -156,8 +148,17 @@ function hex(arrayBuffer)
 
             subcounter += 1;
             var source = audioCtx.createBufferSource();
+            var gain = audioCtx.createGain();
+            gain.connect(audioCtx.destination);
+            gain.gain.value = xgain;
+//  var gainNode = aCtx.createGain()
+//gainNode.gain.value = 0.1 // 10 %
+//gainNode.connect(aCtx.destination)
+
+// now instead of connecting to aCtx.destination, connect to the gainNode
             source.buffer = myAudioBuffer;
-            source.connect(audioCtx.destination);
+//            source.connect(audioCtx.destination);
+            source.connect(gain);
             source.onended = play;
             source.start();
 //        }
@@ -181,6 +182,7 @@ skipper = 0;
 
       ws.onmessage = function(e){
         var msg = "";
+        console.log
         if(e.data instanceof ArrayBuffer){
           
 //          if (skipper>30) {
@@ -194,9 +196,11 @@ skipper = 0;
 //          return;
         if (!xstarted) {
          audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
         }  
 
         buff = new Uint16Array(e.data)
+//        console.log(buff);
         
 //        console.log(buff);
 
@@ -205,7 +209,7 @@ skipper = 0;
  //       play('test');
 
 //        play('test');
-        console.log(">>",buff.length);
+//        console.log(">>",buff.length);
 //        console.log('push',buff.length);
 //        audiobuffer.push(new Uint8Array(e.data));
 //        if (audiobuffer.length>100) {audiobuffer.shift();console.log("-----",audiobuffer.length);}
@@ -265,22 +269,72 @@ skipper = 0;
       }, false);
     }
     
+    function startSlider(){
+      
+$('#slider').on('mousedown', function(e) {
+	if(e.which == 1) {
+		//Vars.
+		var $bar = $('#bar');
+		var $fill = $('#fill');
+		var barWidth = $bar.outerWidth();
+		var sliderWidth = $(this).outerWidth();
+		var sliderX = $(this).offset().left;
+		var downX = e.clientX - sliderX; //mousedown xpos within slider
+		var multiplier = 100 / sliderWidth;
+		var curPercent = downX * multiplier;
+		console.log('down: '+downX+', '+curPercent);
+		moveSliderBar($bar, $fill, curPercent, barWidth);
+		//Window mousemove handler.
+
+$(window).on('mousemove.slider', function(e) {
+			var diffX = (e.clientX - sliderX) - downX;
+			var newPercent = curPercent + (diffX * multiplier);
+			if(newPercent <= 0) {
+				newPercent = 0;
+			}
+			if(newPercent >= 100) {
+				newPercent = 100;
+			}
+			console.log('move: '+newPercent+', '+diffX);
+			xgain = Math.ceil(newPresent*2/100);
+			
+			moveSliderBar($bar, $fill, newPercent, barWidth);
+})
+		//Window mouseup handler.
+		.on('mouseup.slider', function(e) {
+			console.log('up');
+			$(window).off('mousemove.slider mouseup.slider');
+		});
+	}
+});
+
+			moveSliderBar($('#bar'), $('#fill'), 50, $('#bar').outerWidth());
+
+
+}
+
+//	ge('bar').css('left', 'calc(50% - '+(ge('bar').offsetWidth / 2)+'px)');
+//	ge('fill').css('width', 'calc(50% - '+(ge('fill').offsetWidth / 2)+'px)');
     function onBodyLoad(){
+
       startSocket();
       startEvents();
+      startSlider();
       ge("input_el").focus();
     }
     top.xfunc = "";
     </script>
   </head>
   <body id="body" onload="onBodyLoad()"> <!-- style='overflow:hidden' //-->
-
    <div id="work" style='overflow-Y:scroll;overflow-X:hidden;right:0;bottom:0px;position:absolute;width:100%;height:100%'>
      <pre id="dbg" style='width:100%;'></pre>    
     <div id="input_div" style='width:98%'><nobr>
       [ponika ~]#<input type="text" value="" id="input_el">
     </nobr></div></div>
- 
+ <div id="slider" style="float:right">
+	<div id="fill"></div>
+	<div id="bar"></div>
+</div>
 <!--
 <pre id="dbg" style='display:block;width:100%;height:100%;background:#000;color:#F0F0F0;overflow-Y:yes'></pre>
 <div id="fdbg" style='display:block;width:100%;height:12%;position:absolute;padding:10px 10px 10px 10px;margin:10px 0px 10px 0px;border:ridge #FFF 2px;bottom:10px;background:#333333;bottom:0;border-radius:4px;color:#333333;font-family:Tahoma,Verdana,MS Sans Serif;padding-left:15px;margin-bottom:-5px'>

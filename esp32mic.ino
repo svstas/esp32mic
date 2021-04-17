@@ -58,6 +58,7 @@ AsyncWebServer server(80);
 AsyncWebSocket ws("/ws");
 AsyncEventSource events("/events");
 
+int volume = 1;
 TwoWire I2Cone = TwoWire(1);
 
 #ifdef GEST
@@ -65,6 +66,8 @@ TwoWire I2Cone = TwoWire(1);
 RevEng_PAJ7620 gest = RevEng_PAJ7620();
 #endif 
 
+#ifdef VLX
+#endif
 //    char* i2s_read_buff = (char*) calloc(i2s_read_len, sizeof(char));
 //    char* flash_write_buff = (char*) calloc(i2s_read_len, sizeof(char));
 
