@@ -2,12 +2,14 @@
 const i2s_port_t I2S_PORT = I2S_NUM_0;
 const int BLOCK_SIZE = 128;
 const int headerSize = 44;
+const char * udpAddress = "192.168.88.234";
 
 #define I2S_WS 12
-#define I2S_SD 21
+#define I2S_SD 23
 #define I2S_SCK 13
 #define I2S_PORT I2S_NUM_0
 #define I2S_SAMPLE_RATE   (22050)
+//#define I2S_SAMPLE_RATE   (44100)
 #define I2S_SAMPLE_BITS   (16)
 #define I2S_READ_LEN      (5 * 1024)
 #define I2S_CHANNEL_NUM   (1)
@@ -20,7 +22,7 @@ void i2sInit(){
   if (i2sinited) return; else i2sinited = true;
   i2s_config_t i2s_config = {
     .mode = (i2s_mode_t)(I2S_MODE_MASTER | I2S_MODE_RX),
-    .sample_rate = I2S_SAMPLE_RATE,
+    .sample_rate = srate,
     .bits_per_sample = i2s_bits_per_sample_t(I2S_SAMPLE_BITS),
     .channel_format = I2S_CHANNEL_FMT_ONLY_LEFT,
     .communication_format = i2s_comm_format_t(I2S_COMM_FORMAT_I2S | I2S_COMM_FORMAT_I2S_MSB),
@@ -90,6 +92,7 @@ static void i2s_adc_task(void *arg)
 time_t oldxxx = 0;
 
 
+uint8_t buffer[50] = "hello world";
 
 void readmic() {
 
@@ -117,8 +120,17 @@ if (!mstarted) { mstarted = true;
 //      memcpy(out_read_buff,i2s_read_buff,i2s_read_len);
 //    }
 
-    if (clid) {ws.binary(clid, (uint8_t*)i2s_read_buff, (i2s_read_len-300));
-    } else example_disp_buf((uint8_t*) i2s_read_buff, 48);
+    if (clid) {ws.binary(clid, (uint8_t*)i2s_read_buff, (i2s_read_len-sdelay));
+    } else {
+//      udp.beginPacket(udpAddress, 9000);
+//      udp.write((uint8_t*)i2s_read_buff,i2s_read_len);
+//      udp.write((uint8_t*)i2s_read_buff,200);
+//      udp.endPacket();
+    example_disp_buf((uint8_t*) i2s_read_buff, 48);
+
+    }
+
+    
 
     free(i2s_read_buff);
     i2s_read_buff = NULL;

@@ -1,9 +1,19 @@
+bool xcursor = false;
 String doshell(String msg) {
   msg.toLowerCase();
   if (msg.substring(0,1)=="!") {
     tasks.push_back(msg.substring(1));
     return "";
   }
+
+        if (msg == "cursor") {
+            xcursor = !xcursor;
+            if (xcursor) gest.setCursorMode(); else gest.setGestureMode();
+            return "Cursor:"+String(xcursor);
+        }
+        if (msg == "i2c") {
+          tasks.push_back("i2c"); return "";
+        }
 
         if (msg == "reset") {
           trace("Restarting...");
@@ -30,8 +40,18 @@ String doshell(String msg) {
          if (msg == "time") {
             if (xdisplay) disp(String(printDateTime()));
           return String(printDateTime()).c_str();}
-          
-         if (msg == "ws") {clid = clidx; ws.text(clid,"test"); return "Starting... ";}
+
+          if (msg.substring(0,3)=="dls") {
+            sdelay = msg.substring(4).toInt();
+            return ""; 
+          }
+          if (msg.substring(0,3)=="srt") {
+            srate = msg.substring(4).toInt();
+            
+          }
+
+         
+         if (msg == "ws") {clid = clidx; return "Starting... ";}
 
 return "";
 }

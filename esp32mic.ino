@@ -30,6 +30,9 @@
 #include <vector>
 #include <algorithm>
 #include <cstdlib>
+#include <Wire.h>
+//#include <WiFiUdp.h>
+
 extern "C" {
 #include "lwip/err.h"
 #include "lwip/dns.h"
@@ -38,11 +41,18 @@ extern "C" {
 
 //#include <ArduinoWebsockets.h>
 
+WiFiUDP udp;
 DNSServer dns;
 AsyncWebServer server(80);
 AsyncWebSocket ws("/ws");
 AsyncEventSource events("/events");
 
+TwoWire I2Cone = TwoWire(1);
+
+#ifdef GEST
+#include "RevEng_PAJ7620.h"
+RevEng_PAJ7620 gest = RevEng_PAJ7620();
+#endif 
 
 //    char* i2s_read_buff = (char*) calloc(i2s_read_len, sizeof(char));
 //    char* flash_write_buff = (char*) calloc(i2s_read_len, sizeof(char));
@@ -62,11 +72,11 @@ AsyncEventSourceClient * xxclient;
 
 struct conf {
 
-    const char* hostName = "EcoBooster";
-    const char* password = "freestyle";
+    const char* hostName = "PonikaMic";
+    const char* password = "josperado";
     const char* http_username = "admin";
     const char* http_password = "admin";
-    int wifi = 2;
+    int wifi = WIFI;
     bool ota  = true;
     bool tcp  = true;
     bool display = false;
@@ -79,7 +89,14 @@ File xxxf;
 uint8_t clid = 0;
 uint8_t clidx = 0;
 bool xdisplay = false;
+uint16_t sdelay = 300;
+uint16_t srate = 22050;
+
+
 time_t mls,omls;
+
+
+int ox,oy;
 void loop(){
   mls = millis();
   ArduinoOTA.handle();
@@ -87,4 +104,17 @@ void loop(){
   if (tasks.size()) dotask(true); //else dotask(false);
 //  ets_printf("> %lu\n",mls-omls);
   omls = mls;
+
+#ifdef GEST
+if( gest.isCursorInView() )
+  {
+    Serial.print("Has Cursor in view: ");
+    digitalWrite(LED_BUILTIN, HIGH);
+    int x = gest.getCursorX();
+    int y = gest.getCursorY();
+    if (x!=ox || y!=oy) sendEvent(String(x)+","+String(y)); 
+//    Serial.println("(X,Y) (" + String(cursor_x) + "," + String(cursor_y) + ")");
+    ox = x;oy = y;
+  } else gesture();
+#endif
 }

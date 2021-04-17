@@ -76,6 +76,8 @@ void setup(){
 
   Serial.begin(115200);
   Serial.setDebugOutput(true);
+  I2Cone.begin(21, 22);
+  
 #ifdef BUTTON  
   semaphore = xSemaphoreCreateBinary();
   gpio_pad_select_gpio((gpio_num_t)0);
@@ -118,9 +120,12 @@ if (conf.wifi ==  1) {
 } else if (conf.wifi ==  2) {
   AsyncWiFiManager wifiManager(&server,&dns);
   wifiManager.setBreakAfterConfig(true);
+  wifiManager.resetSettings();
+
   if (!wifiManager.autoConnect("PonikaMic", "11111111")) {
     Serial.println("failed to connect, we should reset as see if it connects");
     delay(3000);
+    ESP.restart();
     ESP.restart();
     delay(5000);
   }
@@ -192,6 +197,17 @@ if (conf.tcp) {
     if(index + len == total)
       Serial.printf("BodyEnd: %u\n", total);
   });
+
+#ifdef GEST
+   if( !gest.begin(&I2Cone))             // return value of 1 == success
+  {
+    Serial.print("PAJ7620 init error -- device not found -- halting");
+    while(true) {}
+  }
+//    gest.setCursorMode(); 
+    Serial.println("PAJ7620 started");
+#endif
+
 
   server.begin();
  }

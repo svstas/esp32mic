@@ -4,7 +4,9 @@ void dotask(bool flag) {
 String xt;
 if (flag) {xt = tasks.back();tasks.pop_back();}
 if (xt=="rm") readmic();
-if (xt=="adc") xTaskCreate(i2s_adc_task, "i2s_adc_task", 16192, NULL, 1, &i2sADCHandler);
+//if (xt=="adc") xTaskCreatePinnedToCore(gesture, "gesture", 4096, NULL, 1, &i2sADCHandler,1);
+
+if (xt=="i2c") { scan_i2c();return;} 
 
 if (xt.substring(0,4)=="disp") {
 sendEvent(xt.substring(4));
