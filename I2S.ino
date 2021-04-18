@@ -90,7 +90,7 @@ time_t oldxxx = 0;
 uint8_t buffer[50] = "hello world";
 
 
-void xscale(uint8_t* s_buff, uint32_t len, uint16_t sdelay) {
+uint16_t xscale(uint8_t* s_buff, uint32_t len, uint16_t sdelay) {
 
     uint16_t dac_value = 0;
     uint8_t xdrop = len/sdelay;
@@ -105,6 +105,7 @@ void xscale(uint8_t* s_buff, uint32_t len, uint16_t sdelay) {
      s_buff[wpoint+1] = (dac_value & 0xff);
      wpoint +=2;
     }
+    return wpoint-2;
 //    Serial.println()
 }
 
@@ -126,8 +127,8 @@ if (!mstarted) { mstarted = true;
 	for (uint8_t i=0;i<4;i++) i2s_read(I2S_PORT, (void*) i2s_read_buff, i2s_read_len, &bytes_read, portMAX_DELAY);
 }
     i2s_read(I2S_PORT, (uint8_t*)i2s_read_buff, i2s_read_len, &bytes_read, portMAX_DELAY);
-    xscale((uint8_t*)i2s_read_buff,i2s_read_len, sdelay);
-    if (clid) {ws.binary(clid, (uint8_t*)i2s_read_buff, (i2s_read_len-sdelay-2));
+    
+    if (clid) {ws.binary(clid, (uint8_t*)i2s_read_buff, xscale((uint8_t*)i2s_read_buff, i2s_read_len, sdelay));
     } else {
 //      udp.beginPacket(udpAddress, 9000);
 //      udp.write((uint8_t*)i2s_read_buff,i2s_read_len);
