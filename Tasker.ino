@@ -14,7 +14,7 @@ if (xt=="adc") {
 xTaskCreatePinnedToCore(i2s_adc_task, "adc", 8192, NULL, 1, &adcHandler,1);
 }
 
-if (xt=="off") if (adcHandler != NULL) {vTaskDelete(adcHandler);}
+if (xt=="off") if (adcHandler != NULL) {vTaskDelete(adcHandler);isadc=false;}
 if (xt=="goff") if (GestHandler != NULL) {vTaskDelete(GestHandler);isgest=false;sendEvent("GESTURE: OFF");}
 
 if (xt=="gest") {

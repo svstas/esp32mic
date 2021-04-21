@@ -33,6 +33,9 @@
 #include <Wire.h>
 //#include <WiFiUdp.h>
 
+String udpAddress = "192.168.88.234";
+
+
 extern "C" {
 #include "lwip/err.h"
 #include "lwip/dns.h"

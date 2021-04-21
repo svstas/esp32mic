@@ -2,7 +2,7 @@
 const i2s_port_t I2S_PORT = I2S_NUM_0;
 const int BLOCK_SIZE = 128;
 const int headerSize = 44;
-const char * udpAddress = "192.168.88.234";
+//char udpAddress = "192.168.88.234";
 bool mstarted = false;
 
 #define I2S_WS 12
@@ -54,22 +54,25 @@ void i2sInit(){
 
 static void i2s_adc_task(void *arg)
 {
-if (!isadc) isadc = true; else return;
+  uint8_t points = 0;
+if (!isadc) isadc = true;
 if (!i2sinited) {i2sInit();vTaskDelay(40);}
 
   size_t bytes_read;
   char* i2s_read_buff = (char*) calloc(i2s_read_len, sizeof(char));
     Serial.println("ADC STARTED");
     while (1) {
-        i2s_read(I2S_PORT, (void*) i2s_read_buff, i2s_read_len, &bytes_read, portMAX_DELAY);
+      
+      if (clid) i2s_read(I2S_PORT, (void*) i2s_read_buff, i2s_read_len, &bytes_read, portMAX_DELAY);
+      else i2s_read(I2S_PORT, (void*) i2s_read_buff, 1458, &bytes_read, portMAX_DELAY);
 
     if (clid) {ws.binary(clid, (uint8_t*)i2s_read_buff, xscale((uint8_t*)i2s_read_buff, i2s_read_len, sdelay));
     } else {
-      udp.beginPacket(udpAddress, 9002);
-//      udp.write((uint8_t*)i2s_read_buff,i2s_read_len);
-      udp.write((uint8_t*)i2s_read_buff,100);
+      udp.beginPacket(udpAddress.c_str(), 9002);
+//      udp.write(points);
+//      if (points>255) points=0; else points++;
+      udp.write((uint8_t*)i2s_read_buff,1458);
       udp.endPacket();
-//    example_disp_buf((uint8_t*) i2s_read_buff, 48);
     }
     }
     

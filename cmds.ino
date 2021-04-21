@@ -15,6 +15,11 @@ String doshell(String msg) {
         }
 #endif  
 
+        if (msg.substring(0,3)=="udp") {
+        udpAddress = msg.substring(4); udpAddress.trim();
+        sendEvent("SET UDP address: "+udpAddress);
+        vTaskDelay(5);          
+        }
         if (msg == "reset") {
           trace("Restarting...");
             sendEvent("Restarting...","ota");
