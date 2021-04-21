@@ -55,11 +55,7 @@ void i2sInit(){
 static void i2s_adc_task(void *arg)
 {
 if (!isadc) isadc = true; else return;
-
-   if (!i2sinited) {
-    i2sInit();
-    vTaskDelay(100);  
-    }
+if (!i2sinited) {i2sInit();vTaskDelay(40);}
 
   size_t bytes_read;
   char* i2s_read_buff = (char*) calloc(i2s_read_len, sizeof(char));
@@ -69,19 +65,12 @@ if (!isadc) isadc = true; else return;
 
     if (clid) {ws.binary(clid, (uint8_t*)i2s_read_buff, xscale((uint8_t*)i2s_read_buff, i2s_read_len, sdelay));
     } else {
-//      udp.beginPacket(udpAddress, 9000);
+      udp.beginPacket(udpAddress, 9002);
 //      udp.write((uint8_t*)i2s_read_buff,i2s_read_len);
-//      udp.write((uint8_t*)i2s_read_buff,200);
-//      udp.endPacket();
-    example_disp_buf((uint8_t*) i2s_read_buff, 48);
+      udp.write((uint8_t*)i2s_read_buff,100);
+      udp.endPacket();
+//    example_disp_buf((uint8_t*) i2s_read_buff, 48);
     }
-
-        
-//        i2s_adc_data_scale(flash_write_buff, i2s_read_buff, i2s_read_len);
-//        ws.binary(clidx, (uint8_t*)i2s_read_buff, i2s_read_len);
-//        ws.binary(clidx, (uint8_t*)flash_write_buff, i2s_read_len);
-//        ets_printf("Never Used Stack Size: %u\n", uxTaskGetStackHighWaterMark(NULL));
-//      vTaskDelay(20);
     }
     
     free(i2s_read_buff);
@@ -91,12 +80,9 @@ if (!isadc) isadc = true; else return;
 
 time_t oldxxx = 0;
 
-
 uint8_t buffer[50] = "hello world";
 
-
 uint16_t xscale(uint8_t* s_buff, uint32_t len, uint16_t sdelay) {
-
     if (sdelay<2) return sdelay;
     
     uint16_t dac_value = 0;
@@ -113,9 +99,15 @@ uint16_t xscale(uint8_t* s_buff, uint32_t len, uint16_t sdelay) {
      wpoint +=2;
     }
     return wpoint-2;
-//    Serial.println()
 }
 
+
+
+
+
+
+
+/*
 void readmic() {
 
   ///                    Сделать событие на обрыв сети вырубить трансляцию
@@ -158,3 +150,5 @@ void example_disp_buf(uint8_t* buf, int length) {
     for (int i = 0; i < length; i++) out+=String(buf[i],HEX)+" ";
     sendEvent(out);
 }
+
+*/

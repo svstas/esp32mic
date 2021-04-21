@@ -1,23 +1,21 @@
 //#ifdef GEST
 TaskHandle_t GestHandler = NULL;
-TaskHandle_t adcHandler = NULL;
 //#endif
+
+TaskHandle_t adcHandler = NULL;
 
 void dotask(bool flag) {
 String xt;
 if (flag) {xt = tasks.back();tasks.pop_back();}
-if (xt=="rm") readmic();
+//if (xt=="rm") readmic();
 
 //#ifdef GEST
 if (xt=="adc") {
-//if (!isgest) {sendEvent("GESTURE: ON");
-
 xTaskCreatePinnedToCore(i2s_adc_task, "adc", 8192, NULL, 1, &adcHandler,1);
-
-//isgest=true;}
-//else {vTaskDelete(&GestHandler);isgest = false;sendEvent("GESTURE: OFF");}
 }
 
+if (xt=="off") if (adcHandler != NULL) {vTaskDelete(adcHandler);}
+if (xt=="goff") if (GestHandler != NULL) {vTaskDelete(GestHandler);isgest=false;sendEvent("GESTURE: OFF");}
 
 if (xt=="gest") {
 if (!isgest) {sendEvent("GESTURE: ON");xTaskCreatePinnedToCore(gesture, "gesture", 8192, NULL, 2, &GestHandler,1);isgest=true;}
