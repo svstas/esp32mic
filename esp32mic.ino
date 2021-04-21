@@ -112,6 +112,7 @@ time_t mls,omls;
 
  
 bool isgest = false;
+bool isadc  = false;
 void loop(){
   mls = millis();
   ArduinoOTA.handle();

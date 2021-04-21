@@ -50,39 +50,44 @@ void i2sInit(){
   trace(F("I2S MIC started"));
 }
 
-/*
+
 
 static void i2s_adc_task(void *arg)
 {
+if (!isadc) isadc = true; else return;
 
-//    i2s_driver_install(I2S_NUM_1, &i2s_config_rx, 0, NULL);
-//    i2s_set_pin(I2S_NUM_1, &pin_config_rx);
-      i2sInit();
-      vTaskDelay(200);
-//    int i2s_read_len = I2S_READ_LEN;
-    size_t bytes_read;
+   if (!i2sinited) {
+    i2sInit();
+    vTaskDelay(100);  
+    }
 
-    char* i2s_read_buff = (char*) calloc(i2s_read_len, sizeof(char));
-    char* flash_write_buff = (char*) calloc(i2s_read_len, sizeof(char));
-
+  size_t bytes_read;
+  char* i2s_read_buff = (char*) calloc(i2s_read_len, sizeof(char));
     Serial.println("ADC STARTED");
     while (1) {
         i2s_read(I2S_PORT, (void*) i2s_read_buff, i2s_read_len, &bytes_read, portMAX_DELAY);
+
+    if (clid) {ws.binary(clid, (uint8_t*)i2s_read_buff, xscale((uint8_t*)i2s_read_buff, i2s_read_len, sdelay));
+    } else {
+//      udp.beginPacket(udpAddress, 9000);
+//      udp.write((uint8_t*)i2s_read_buff,i2s_read_len);
+//      udp.write((uint8_t*)i2s_read_buff,200);
+//      udp.endPacket();
+    example_disp_buf((uint8_t*) i2s_read_buff, 48);
+    }
+
+        
 //        i2s_adc_data_scale(flash_write_buff, i2s_read_buff, i2s_read_len);
 //        ws.binary(clidx, (uint8_t*)i2s_read_buff, i2s_read_len);
 //        ws.binary(clidx, (uint8_t*)flash_write_buff, i2s_read_len);
 //        ets_printf("Never Used Stack Size: %u\n", uxTaskGetStackHighWaterMark(NULL));
-      vTaskDelay(20);
+//      vTaskDelay(20);
     }
     
     free(i2s_read_buff);
     i2s_read_buff = NULL;
-    free(flash_write_buff);
-    flash_write_buff = NULL;
-
+ 
 }
-
-*/
 
 time_t oldxxx = 0;
 
@@ -92,6 +97,8 @@ uint8_t buffer[50] = "hello world";
 
 uint16_t xscale(uint8_t* s_buff, uint32_t len, uint16_t sdelay) {
 
+    if (sdelay<2) return sdelay;
+    
     uint16_t dac_value = 0;
     uint8_t xdrop = len/sdelay;
     uint32_t wpoint = 0;
@@ -150,55 +157,4 @@ void example_disp_buf(uint8_t* buf, int length) {
   String out = "";
     for (int i = 0; i < length; i++) out+=String(buf[i],HEX)+" ";
     sendEvent(out);
-}
-
-void wavHeader(byte* header, int wavSize) {
-  
-    
-  header[0] = 'R';
-  header[1] = 'I';
-  header[2] = 'F';
-  header[3] = 'F';
-  unsigned int fileSize = wavSize + headerSize - 8;
-  header[4] = (byte)(fileSize & 0xFF);
-  header[5] = (byte)((fileSize >> 8) & 0xFF);
-  header[6] = (byte)((fileSize >> 16) & 0xFF);
-  header[7] = (byte)((fileSize >> 24) & 0xFF);
-  header[8] = 'W';
-  header[9] = 'A';
-  header[10] = 'V';
-  header[11] = 'E';
-  header[12] = 'f';
-  header[13] = 'm';
-  header[14] = 't';
-  header[15] = ' ';
-  header[16] = 0x10;
-  header[17] = 0x00;
-  header[18] = 0x00;
-  header[19] = 0x00;
-  header[20] = 0x01;
-  header[21] = 0x00;
-  header[22] = 0x01;
-  header[23] = 0x00;
-  header[24] = 0x80;
-  header[25] = 0x3E;
-  header[26] = 0x00;
-  header[27] = 0x00;
-  header[28] = 0x00;
-  header[29] = 0x7D;
-  header[30] = 0x00;
-  header[31] = 0x00;
-  header[32] = 0x02;
-  header[33] = 0x00;
-  header[34] = 0x10;
-  header[35] = 0x00;
-  header[36] = 'd';
-  header[37] = 'a';
-  header[38] = 't';
-  header[39] = 'a';
-  header[40] = (byte)(wavSize & 0xFF);
-  header[41] = (byte)((wavSize >> 8) & 0xFF);
-  header[42] = (byte)((wavSize >> 16) & 0xFF);
-  header[43] = (byte)((wavSize >> 24) & 0xFF);
-
 }
