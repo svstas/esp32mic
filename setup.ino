@@ -16,7 +16,7 @@ void onWsEvent(AsyncWebSocket * server, AsyncWebSocketClient * client, AwsEventT
     String msg = "";
     if(info->final && info->index == 0 && info->len == len){
       //the whole message is in a single frame and we got all of it's data
-      Serial.printf("ws[%s][%u] %s-message[%llu]: ", server->url(), client->id(), (info->opcode == WS_TEXT)?"text":"binary", info->len);
+//      Serial.printf("ws[%s][%u] %s-message[%llu]: ", server->url(), client->id(), (info->opcode == WS_TEXT)?"text":"binary", info->len);
 
       if(info->opcode == WS_TEXT){
         for(size_t i=0; i < info->len; i++) {
@@ -30,9 +30,23 @@ void onWsEvent(AsyncWebSocket * server, AsyncWebSocketClient * client, AwsEventT
         }
       }
       Serial.printf("%s\n",msg.c_str());
+//      int smpls = msg.toInt();
+//      int sm = 22050; if (smpls>35000) sm = 44100; 
+//      sdelay = (sm - smpls)/2;
+//      if (!(sdelay % 2)) sdelay++;
+//      if (sdelay>1000) sdelay = 1000;
+    
+      Serial.print("DELAY: ");
+      Serial.println(sdelay);
+      Serial.print("msg: ");
+      Serial.println(msg.toInt());
 
-      if(info->opcode == WS_TEXT)
-        client->text("I got your text message");
+      if (sdelay<=0) 
+      sdelay=300;                                       // Синхронизация звука
+
+      if(info->opcode == WS_TEXT) {
+//        client->text("I got your text message");
+      }
       else
         client->binary("I got your binary message");
     } else {

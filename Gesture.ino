@@ -110,7 +110,7 @@ if (gest.isCursorInView()) {
     Serial.println(xgesture);
   }
 }
-  vTaskDelay(40);
+  vTaskDelay(5);
   }
   
 }

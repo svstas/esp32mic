@@ -19,23 +19,10 @@ function moveSliderBar($bar, $fill, percent, barWidth) {
 	$fill.css('width', 'calc('+percent+'% - '+(barWidth / 2)+'px)');
 }
 
-   
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
     var xhistory = Array(); 
     var pp=0;
     top.xcommand = "";
+    let getBytes = 0; 
 
     
     var ws = null;
@@ -166,10 +153,19 @@ function hex(arrayBuffer)
 
 
 skipper = 0;
-
+var oxtime,nxtime,xstep,insec,getbytes;
+xstep = 0; insex = 0;getbytes = 0;
     function startSocket(){
       
-
+/*
+      let feedBack = setInterval(()=>{
+        if (getBytes) {
+        ws.send(getBytes);
+        console.log(getBytes);
+        getBytes = 0;
+        }
+      },2020);
+*/
 //      ws = new WebSocket('ws://'+document.location.host+'/ws',['arduino']);
       ws = new WebSocket('ws://'+document.location.host+'/ws',['arduino']);
       ws.binaryType = "arraybuffer";
@@ -182,7 +178,7 @@ skipper = 0;
 
       ws.onmessage = function(e){
         var msg = "";
-        console.log
+//        console.log
         if(e.data instanceof ArrayBuffer){
           
 //          if (skipper>30) {
@@ -196,10 +192,42 @@ skipper = 0;
 //          return;
         if (!xstarted) {
          audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-
+     $('#slider').css('visibility', 'visible');
         }  
 
+//          if (e.data.length<600) return;
+//          if (!e.data.length % 2) {
+            
+//            delete[e.data.length];
+//          }        
+
+//          console.log(e.data,e.data.length);
+
         buff = new Uint16Array(e.data)
+        if (buff.length) getBytes +=buff.length;
+        
+/* синхронизация  ----- нужно доделать 
+        oxtime = nxtime;
+        
+        nxtime = new Date().getMilliseconds();
+//        console.log(ntime-otime);
+        xxx = (nxtime-oxtime);
+        if (xxx<0) {xxx = 1000+xxx;console.log('fix');}
+        getbytes += buff.length;
+        console.log(xxx);
+        insec+=xxx;
+        xstep++;
+
+
+        if (xstep>8) {
+          console.log(">>>",insec,getbytes);
+          insec=0;
+          xstep=0;
+          getbytes = 0;
+
+        }
+*/
+
 //        console.log(buff);
         
 //        console.log(buff);
@@ -233,6 +261,7 @@ skipper = 0;
 
         } else {
           msg = e.data;
+
         }
         addMessage(msg);
       };
@@ -260,6 +289,10 @@ skipper = 0;
         console.log(e.data);
       };
       es.addEventListener('ota', function(e) {
+          msg = e.data;
+          if (msg=="CW") if (xgain<2) xgain += 0.1;
+          if (msg=="CCW") if (xgain>0.1) xgain -= 0.1;
+        	moveSliderBar($('#bar'), $('#fill'), xgain*20, $('#bar').outerWidth());
         addMessage("Event[ota]: " + e.data);
       }, false);
       es.addEventListener('data', function(e) {
@@ -296,7 +329,7 @@ $(window).on('mousemove.slider', function(e) {
 				newPercent = 100;
 			}
 			console.log('move: '+newPercent+', '+diffX);
-			xgain = Math.ceil(newPresent*2/100);
+			xgain = newPercent*5/100;
 			
 			moveSliderBar($bar, $fill, newPercent, barWidth);
 })
@@ -308,14 +341,18 @@ $(window).on('mousemove.slider', function(e) {
 	}
 });
 
-			moveSliderBar($('#bar'), $('#fill'), 50, $('#bar').outerWidth());
+			moveSliderBar($('#bar'), $('#fill'), 20, $('#bar').outerWidth());
 
 
 }
 
 //	ge('bar').css('left', 'calc(50% - '+(ge('bar').offsetWidth / 2)+'px)');
 //	ge('fill').css('width', 'calc(50% - '+(ge('fill').offsetWidth / 2)+'px)');
-    function onBodyLoad(){
+$(document).ready(function() {
+    $('#slider').css('visibility', 'hidden');
+});
+
+function onBodyLoad(){
 
       startSocket();
       startEvents();
@@ -335,6 +372,7 @@ $(window).on('mousemove.slider', function(e) {
 	<div id="fill"></div>
 	<div id="bar"></div>
 </div>
+
 <!--
 <pre id="dbg" style='display:block;width:100%;height:100%;background:#000;color:#F0F0F0;overflow-Y:yes'></pre>
 <div id="fdbg" style='display:block;width:100%;height:12%;position:absolute;padding:10px 10px 10px 10px;margin:10px 0px 10px 0px;border:ridge #FFF 2px;bottom:10px;background:#333333;bottom:0;border-radius:4px;color:#333333;font-family:Tahoma,Verdana,MS Sans Serif;padding-left:15px;margin-bottom:-5px'>

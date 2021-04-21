@@ -9,7 +9,7 @@ if (xt=="rm") readmic();
 
 //#ifdef GEST
 if (xt=="gest") {
-if (!isgest) {sendEvent("GESTURE: ON");xTaskCreatePinnedToCore(gesture, "gesture", 8192, NULL, 1, &GestHandler,1);isgest=true;}
+if (!isgest) {sendEvent("GESTURE: ON");xTaskCreatePinnedToCore(gesture, "gesture", 8192, NULL, 8, &GestHandler,1);isgest=true;}
 //else {vTaskDelete(&GestHandler);isgest = false;sendEvent("GESTURE: OFF");}
 }
 //#endif
